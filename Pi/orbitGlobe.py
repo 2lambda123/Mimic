@@ -4,6 +4,7 @@ import numpy as np
 from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
 import ephem
+import datetime
 
 url = "https://www.celestrak.com/NORAD/elements/stations.txt"
 response = urllib.request.urlopen(url)
@@ -23,7 +24,7 @@ iss.compute()
 latitude = np.rad2deg(iss.sublat)
 longitude = np.rad2deg(iss.sublong)
 
-# calculate the orbital path of the ISS for the next hour
+# calculate the orbital path of the ISS for the next 95 minutes
 orbit_lat = []
 orbit_lon = []
 for t in range(95):
@@ -54,22 +55,26 @@ def plotEarthColor():
 
 def plotEarthNoColor():
     # create a basemap of the earth
-    fig = plt.figure(figsize=(8, 8))
+    fig = plt.figure(figsize=(1, 1))
     m = Basemap(projection='ortho', lat_0=latitude, lon_0=longitude)
-    m.shadedrelief()
+    m.shadedrelief(scale=0.1)
 
     # plot the groundtrack of the ISS
     m.plot(orbit_lon, orbit_lat, latlon=True, color='green', linewidth=2)
 
     # plot the current location of the ISS
     x, y = m(longitude, latitude)
-    m.plot(x, y, 'ro', markersize=20)
+    m.plot(x, y, 'ro', markersize=2)
 
     # add coastlines, countries, and gridlines
     m.drawcoastlines()
-    m.drawcountries()
+    #m.drawcountries()
     #m.drawparallels(np.arange(-90., 120., 30.), labels=[1, 0, 0, 0])
     #m.drawmeridians(np.arange(0., 420., 60.), labels=[0, 0, 0, 1])
+
+    date = datetime.datetime.now()
+    #date = ephem.now()
+    m.nightshade(date, alpha=0.3)
 
     # show the plot
     plt.savefig('/home/pi/Mimic/Pi/imgs/orbit/globe.png', dpi=100, transparent = True)

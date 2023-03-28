@@ -1292,7 +1292,7 @@ class MainApp(App):
         root.add_widget(self.settings_screen)
         root.current = 'main' #change this back to main when done with eva setup
 
-        Clock.schedule_interval(self.update_labels, 1) #all telemetry wil refresh and get pushed to arduinos every half second!
+        Clock.schedule_interval(self.update_labels, 1) #all telemetry wil refresh and get pushed to arduinos every second!
         Clock.schedule_interval(self.animate3, 0.1)
         Clock.schedule_interval(self.orbitUpdate, 1)
         Clock.schedule_interval(self.checkCrew, 600)
@@ -1310,7 +1310,9 @@ class MainApp(App):
 
         #schedule the orbitmap to update with shadow every 5 mins
         Clock.schedule_interval(self.updateNightShade, 120)
-        Clock.schedule_interval(self.updateOrbitMap, 10)
+        Clock.schedule_interval(self.updateOrbitMap, 30)
+        Clock.schedule_interval(self.updateOrbitGlobe, 30)
+        Clock.schedule_interval(self.updateGlobeImage, 10)
         Clock.schedule_interval(self.checkTDRS, 5)
         return root
 
@@ -1360,6 +1362,13 @@ class MainApp(App):
 
     def updateNightShade(self, dt):
         proc = Popen(["python3", mimic_directory + "/Mimic/Pi/NightShade.py"])
+
+    def updateOrbitGlobe(self, dt):
+        self.orbit_screen.ids.orbit3d.source = mimic_directory + '/Mimic/Pi/imgs/orbit/globe.png'
+        self.orbit_screen.ids.orbit3d.reload()
+
+    def updateGlobeImage(self, dt):
+        proc = Popen(["python", mimic_directory + "/Mimic/Pi/orbitGlobe.py"])
 
     def checkTDRS(self, dt):
         global activeTDRS1
