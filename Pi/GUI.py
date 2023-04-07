@@ -328,7 +328,6 @@ depress1 = False
 depress2 = False
 leakhold = False
 repress = False
-ISS_TLE_Acquired = False
 stationmode = 0.00
 tdrs = ""
 EVA_picture_urls = []
@@ -1231,6 +1230,16 @@ class MainApp(App):
 
     def build(self):
         global startup, ScreenList, stopAnimation
+        global tles
+
+        tles = {
+            "ISS": None,
+            "TDRS 12": None,
+            "TDRS 11": None,
+            "TDRS 10": None,
+            "TDRS 7": None,
+            "TDRS 6": None,
+        }
 
         self.main_screen = MainScreen(name = 'main')
         self.mimic_screen = MimicScreen(name = 'mimic')
@@ -1301,10 +1310,10 @@ class MainApp(App):
 
         Clock.schedule_once(self.checkCrew, 30)
         Clock.schedule_once(self.checkBlogforEVA, 30)
-        Clock.schedule_once(self.getTLE, 15) #uncomment when internet works again
+        #Clock.schedule_once(self.getTLE, 15) #uncomment when internet works again
         Clock.schedule_once(self.TDRSupdate, 30) #uncomment when internet works again
 
-        Clock.schedule_interval(self.getTLE, 300)
+        #Clock.schedule_interval(self.getTLE, 300)
         Clock.schedule_interval(self.TDRSupdate, 600)
         Clock.schedule_interval(self.check_internet, 1)
 
@@ -1774,8 +1783,9 @@ class MainApp(App):
         self.orbit_screen.ids.ZOElabel.pos_hint = {"center_x": scaleLatLon(0, 77)['newLon'], "center_y": scaleLatLon(0, 77)['newLat']+0.1}
 
     def orbitUpdate(self, dt):
-        global overcountry, ISS_TLE, ISS_TLE_Line1, ISS_TLE_Line2, ISS_TLE_Acquired, sgant_elevation, sgant_elevation_old, sgant_xelevation, aos, oldtdrs, tdrs, logged
-        global TDRS12_TLE, TDRS6_TLE, TDRS7_TLE, TDRS10_TLE, TDRS11_TLE, tdrs1, tdrs2, tdrs_timestamp
+        global overcountry, sgant_elevation, sgant_elevation_old, sgant_xelevation, aos, oldtdrs, tdrs, logged
+        global tles
+
         def scaleLatLon(latitude, longitude):
             #converting lat lon to x, y for orbit map
             fromLatSpan = 180.0
@@ -1852,6 +1862,9 @@ class MainApp(App):
             sslon = sslon - 360.0 * nrot
 
             return sslat, sslon
+        
+        if tles["ISS"] is not None:
+            ISS_TLE.compute(datetime.utcnow())
 
         if ISS_TLE_Acquired:
             ISS_TLE.compute(datetime.utcnow())
@@ -2049,146 +2062,6 @@ class MainApp(App):
                 else:
                     self.orbit_screen.ids.ISSvisible.text = "Not Visible"
                 self.orbit_screen.ids.countdown.text = str("{:.0f}".format(math.floor(nextpasshours))) + ":" + str("{:.0f}".format(math.floor(nextpassmins))) + ":" + str("{:.0f}".format(math.floor(nextpassseconds))) #display time until next pass
-
-    def getTLE(self, *args):
-        global ISS_TLE, ISS_TLE_Line1, ISS_TLE_Line2, ISS_TLE_Acquired
-        #iss_tle_url =  'https://spaceflight.nasa.gov/realdata/sightings/SSapplications/Post/JavaSSOP/orbit/ISS/SVPOST.html' #the rev counter on this page is wrong
-        iss_tle_url =  'https://celestrak.org/NORAD/elements/stations.txt'
-        tdrs_tle_url =  'https://celestrak.org/NORAD/elements/tdrss.txt'
-
-        def on_success(req, data): #if TLE data is successfully received, it is processed here
-            global ISS_TLE, ISS_TLE_Line1, ISS_TLE_Line2, ISS_TLE_Acquired
-            soup = BeautifulSoup(data, "lxml")
-            body = iter(soup.get_text().split('\n'))
-            results = []
-            for line in body:
-                if "ISS (ZARYA)" in line:
-                    results.append(line)
-                    results.append(next(body))
-                    results.append(next(body))
-                    break
-            results = [i.strip() for i in results]
-
-            if len(results) > 0:
-                ISS_TLE_Line1 = results[1]
-                ISS_TLE_Line2 = results[2]
-                ISS_TLE = ephem.readtle("ISS (ZARYA)", str(ISS_TLE_Line1), str(ISS_TLE_Line2))
-                ISS_TLE_Acquired = True
-                logWrite("ISS TLE Acquired!")
-            else:
-                logWrite("ISS TLE Not Acquired")
-                ISS_TLE_Acquired = False
-
-        def on_redirect(req, result):
-            logWrite("Warning - Get ISS TLE failure (redirect)")
-            logWrite(result)
-
-        def on_failure(req, result):
-            logWrite("Warning - Get ISS TLE failure (url failure)")
-            logWrite(result)
-
-        def on_error(req, result):
-            logWrite("Warning - Get ISS TLE failure (url error)")
-            logWrite(result)
-
-        def on_success2(req2, data2): #if TLE data is successfully received, it is processed here
-            #retrieve the TLEs for every TDRS that ISS talks too
-            global TDRS12_TLE,TDRS6_TLE,TDRS11_TLE,TDRS10_TLE,TDRS7_TLE
-            soup = BeautifulSoup(data2, "lxml")
-            body = iter(soup.get_text().split('\n'))
-            results = ['','','']
-            #TDRS 12 TLE
-            for line in body:
-                if "TDRS 12" in line:
-                    results[0] = line
-                    results[1] = next(body)
-                    results[2] = next(body)
-                    break
-
-            if len(results[1]) > 0:
-                TDRS12_TLE = ephem.readtle("TDRS 12", str(results[1]), str(results[2]))
-                logWrite("TDRS 12 TLE Success!")
-            else:
-                logWrite("TDRS 12 TLE not acquired")
-
-            results = ['','','']
-            body = iter(soup.get_text().split('\n'))
-            #TDRS 6 TLE
-            for line in body:
-                if "TDRS 6" in line:
-                    results[0] = line
-                    results[1] = next(body)
-                    results[2] = next(body)
-                    break
-
-            if len(results[1]) > 0:
-                TDRS6_TLE = ephem.readtle("TDRS 6", str(results[1]), str(results[2]))
-                logWrite("TDRS 6 TLE Success!")
-            else:
-                logWrite("TDRS 6 TLE not acquired")
-
-            results = ['','','']
-            body = iter(soup.get_text().split('\n'))
-            #TDRS 11 TLE
-            for line in body:
-                if "TDRS 11" in line:
-                    results[0] = line
-                    results[1] = next(body)
-                    results[2] = next(body)
-                    break
-
-            if len(results[1]) > 0:
-                TDRS11_TLE = ephem.readtle("TDRS 11", str(results[1]), str(results[2]))
-                logWrite("TDRS 11 TLE Success!")
-            else:
-                logWrite("TDRS 11 TLE not acquired")
-
-            results = ['','','']
-            body = iter(soup.get_text().split('\n'))
-            #TDRS 10 TLE
-            for line in body:
-                if "TDRS 10" in line:
-                    results[0] = line
-                    results[1] = next(body)
-                    results[2] = next(body)
-                    break
-
-            if len(results[1]) > 0:
-                TDRS10_TLE = ephem.readtle("TDRS 10", str(results[1]), str(results[2]))
-                logWrite("TDRS 10 TLE Success!")
-            else:
-                logWrite("TDRS 10 TLE not acquired")
-
-            results = ['','','']
-            body = iter(soup.get_text().split('\n'))
-            #TDRS 7 TLE
-            for line in body:
-                if "TDRS 7" in line:
-                    results[0] = line
-                    results[1] = next(body)
-                    results[2] = next(body)
-                    break
-
-            if len(results[1]) > 0:
-                TDRS7_TLE = ephem.readtle("TDRS 7", str(results[1]), str(results[2]))
-                logWrite("TDRS 7 TLE Success!")
-            else:
-                logWrite("TDRS 7 TLE not acquired")
-
-        def on_redirect2(req2, result):
-            logWrite("Warning - Get TDRS TLE failure (redirect)")
-            logWrite(result)
-
-        def on_failure2(req2, result):
-            logWrite("Warning - Get TDRS TLE failure (url failure)")
-            logWrite(result)
-
-        def on_error2(req2, result):
-            logWrite("Warning - Get TDRS TLE failure (url error)")
-            logWrite(result)
-
-        req = UrlRequest(iss_tle_url, on_success, on_redirect, on_failure, on_error, timeout=1)
-        req2 = UrlRequest(tdrs_tle_url, on_success2, on_redirect2, on_failure2, on_error2, timeout=1)
 
     def checkCrew(self, dt):
         iss_crew_url = 'https://www.howmanypeopleareinspacerightnow.com/peopleinspace.json'
