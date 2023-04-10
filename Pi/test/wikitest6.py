@@ -12,6 +12,10 @@ data = response.json()
 wikitext = data["parse"]["wikitext"]["*"]
 wikicode = mwparserfromhell.parse(wikitext)
 
+print(wikitext)
+print("code")
+print(wikicode)
+
 mission_name = None
 
 # Find all instances of the "flagicon" template
@@ -35,6 +39,6 @@ for template in wikicode.filter_templates():
                         print(f"Mission name: {mission_name}")
                     else:
                         print(f"Crew member name: {crew_names[i]}")
-                    print(f"Wiki link: https://en.wikipedia.org/wiki/{crew_wikilinks[i]}")
+                        print(f"Wiki link: https://en.wikipedia.org/wiki/{crew_wikilinks[i]}")
                 mission_name = None
 
