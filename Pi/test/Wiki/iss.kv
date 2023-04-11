@@ -1,0 +1,61 @@
+
+<CrewMember>:
+    orientation: 'horizontal'
+    spacing: dp(10)
+    size_hint_y: None
+    height: dp(270)
+    Image:
+        source: "C:/Users/samrt/OneDrive/Pictures/1640326408986.jpg"
+        keep_ratio: True
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            text: root.name
+            color: 1, 0, 1, 1  # red color
+            font_size: dp(26)
+            size_hint_y: None
+            height: dp(30)
+        Label:
+            text: "Time in Space: " + root.days_in_space + " days"
+            font_size: dp(18)
+            size_hint_y: None
+            height: dp(30)
+        Label:
+            text: "Mission: " + root.mission
+            font_size: dp(18)
+            size_hint_y: None
+            height: dp(30)
+        Label:
+            text: "Title: " + root.title
+            font_size: dp(18)
+            size_hint_y: None
+            height: dp(30)
+        Label:
+            text: "Nationality: " + root.country
+            font_size: dp(18)
+            size_hint_y: None
+            height: dp(30)
+
+
+<BoxLayout>:
+    spacing: dp(20)
+
+<CrewList>:
+    orientation: 'vertical'
+    padding: dp(20)
+
+    Label:
+        text: root.title
+        font_size: '30sp'
+        size_hint_y: None
+        height: '48dp'
+
+
+    ScrollView:
+        BoxLayout:
+            id: crew_members
+            orientation: 'vertical'
+            size_hint_y: None
+            height: self.minimum_height
+            spacing: dp(20)
+
