@@ -3,9 +3,9 @@
     orientation: 'horizontal'
     spacing: dp(10)
     size_hint_y: None
-    height: dp(270)
-    Image:
-        source: "C:/Users/samrt/OneDrive/Pictures/1640326408986.jpg"
+    height: dp(240)
+    AsyncImage:
+        source: root.pic
         keep_ratio: True
     BoxLayout:
         orientation: 'vertical'
@@ -16,7 +16,12 @@
             size_hint_y: None
             height: dp(30)
         Label:
-            text: "Time in Space: " + root.days_in_space + " days"
+            text: "Country: " + root.country
+            font_size: dp(18)
+            size_hint_y: None
+            height: dp(30)
+        Label:
+            text: "Title: " + root.jobtitle
             font_size: dp(18)
             size_hint_y: None
             height: dp(30)
@@ -26,12 +31,7 @@
             size_hint_y: None
             height: dp(30)
         Label:
-            text: "Title: " + root.title
-            font_size: dp(18)
-            size_hint_y: None
-            height: dp(30)
-        Label:
-            text: "Nationality: " + root.country
+            text: "Time in Space: " + root.days_in_space + " days"
             font_size: dp(18)
             size_hint_y: None
             height: dp(30)
@@ -45,7 +45,7 @@
     padding: dp(20)
 
     Label:
-        text: root.title
+        text: root.title + " - Current ISS Crew"
         font_size: '30sp'
         size_hint_y: None
         height: '48dp'
@@ -58,4 +58,3 @@
             size_hint_y: None
             height: self.minimum_height
             spacing: dp(20)
-

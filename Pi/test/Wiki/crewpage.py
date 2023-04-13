@@ -1,21 +1,20 @@
 import mwparserfromhell
+import requests
 from kivy.app import App
 from kivy.network.urlrequest import UrlRequest
 from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import ListProperty, StringProperty
 from kivy.lang import Builder
-
+from bs4 import BeautifulSoup
+from functools import partial
 
 class CrewMember(BoxLayout):
     name = StringProperty('')
     country = StringProperty('')
-    title = StringProperty('')
+    jobtitle = StringProperty('')
     pic = StringProperty('')
     days_in_space = StringProperty('')
     mission = StringProperty('')
-    craft = StringProperty('')
-    wikilink = StringProperty('')
-
 
 class CrewList(BoxLayout):
     members = ListProperty([])
@@ -26,24 +25,22 @@ class CrewList(BoxLayout):
         self.get_crew_data()
 
     def get_crew_data(self):
+        # URL for the wikipedia "people currently in space" template
         url = "https://en.wikipedia.org/w/api.php?action=parse&page=Template:People_currently_in_space&prop=wikitext&format=json"
 
         def on_success(req, data):
-
             # Parse the wikitext using mwparserfromhell
             wikicode = mwparserfromhell.parse(data["parse"]["wikitext"]["*"])
 
             iss_expedition = wikicode.nodes[0].get("group1").value.nodes[4].title
-            self.title = str(iss_expedition) + " - Current ISS Crew"
+            self.title = str(iss_expedition)
 
             iss_vehicles_lists = []
             iss_vehicles = []
             iss_group = None
 
             # Protecting against bigger number of groups in the future
-            groups = ["group1", "group2", "group3", "group4", "group5", "group6", "group7", "group8", "group9",
-                      "group10",
-                      "group11"]
+            groups = ["group1", "group2", "group3", "group4", "group5", "group6"                , "group7", "group8", "group9", "group10", "group11"]
 
             # Find the group that contains the ISS crew members
             for group in groups:
@@ -104,16 +101,27 @@ class CrewList(BoxLayout):
                         # Get the country of the crew member
                         country = flag_node.get("1").value.strip()
 
+                        # Get the crew member's profile picture
+                        pic_url = ''
+                        pic_req_url = f'https://en.wikipedia.org/wiki/{link}'
+                        pic_data = requests.get(pic_req_url)
+
+                        soup = BeautifulSoup(pic_data.content, 'html.parser')
+                        covers = soup.select('table.infobox a.image img[src]')
+                        pic_url = "https:" + covers[0]['src']
+
+                        self.pic = pic_url
+
                         crew_member = CrewMember(
                             name=name,
-                            title='Flight Engineer',
+                            jobtitle='??',
                             country=country,
-                            days_in_space='103',
-                            mission=spacecraft,
-                            wikilink = link
+                            pic=pic_url,
+                            days_in_space='??',
+                            mission=spacecraft
                         )
 
-                        print(crew_member.name)
+                        # Add the crew member object to the list
                         self.members.append(crew_member)
 
                         # Add the crew member to the widget
@@ -132,12 +140,12 @@ class CrewList(BoxLayout):
             print(result)
 
         # Make a request to the Wikipedia API to get the wikitext of the template page
-        req = UrlRequest(url, on_success, on_redirect, on_failure, on_error, timeout=1)
+        req = UrlRequest(url, on_success, on_redirect, on_failure, on_error, timeout=1, verify=False)
 
 
 class ISSApp(App):
     def build(self):
-        # Builder.load_file('iss.kv')
+        #Builder.load_file('iss.kv')
         return CrewList()
 
 
